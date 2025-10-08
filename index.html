@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>每日熱量精算師 - AI Calorie Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            min-height: 100vh;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
+            color: white;
+            padding: 15px 20px;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            min-height: 60px;
+            position: relative;
+        }
+
+        .logo {
+            width: 100px;
+            height: 100px;
+            border-radius: 12px;
+            object-fit: contain;
+            background: transparent;
+            padding: 8px;
+            position: absolute;
+            top: -15px;
+            left: 0;
+            border: none;
+        }
+
+        .header-text {
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+        }
+
+        .header-text h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+            font-weight: 700;
+            text-align: center;
+            margin-left: 2px;
+        }
+
+        .header-text p {
+            font-size: 14px;
+            opacity: 0.9;
+            text-align: center;
+            margin-left: 6px;
+        }
+
+        .content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .welcome-card {
+            background: linear-gradient(135deg, #34C759 0%, #30D158 100%);
+            color: white;
+            padding: 24px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .welcome-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .welcome-desc {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .setup-btn {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .setup-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-1px);
+        }
+
+        .calorie-summary {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            display: none;
+        }
+
+        .summary-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            text-align: center;
+            color: #333;
+        }
+
+        .target-display {
+            background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
+            color: white;
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .target-calories {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .calorie-unit {
+            font-size: 18px;
+            font-weight: 500;
+            opacity: 0.9;
+        }
+
+        .target-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .progress-section {
+            margin-bottom: 16px;
+        }
+
+        .progress-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #333;
+        }
+
+        .progress-bar {
+            background: #F2F2F7;
+            height: 12px;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 12px;
+            position: relative;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #FF9500 0%, #34C759 100%);
+            height: 100%;
+            width: 0%;
+            border-radius: 6px;
+            transition: width 0.5s ease;
+            position: relative;
+        }
+
+        .progress-percentage {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 10px;
+            font-weight: 600;
+            color: #666;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+        }
+
+        .stat {
+            text-align: center;
+            padding: 12px;
+            background: #F8F9FA;
+            border-radius: 8px;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #007AFF;
+            margin-bottom: 4px;
+            line-height: 1.2;
+        }
+
+        .stat-value .unit {
+            font-size: 12px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .status-message {
+            background: #E3F2FD;
+            border-left: 4px solid #007AFF;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            color: #1976D2;
+        }
+
+        .quick-actions {
+            margin-bottom: 20px;
+        }
+
+        .quick-actions h2 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #333;
+        }
+
+        .primary-action {
+            background: linear-gradient(135deg, #FF9500 0%, #FF6B35 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 16px;
+            text-align: center;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 16px rgba(255, 149, 0, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .primary-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 149, 0, 0.4);
+        }
+
+        .camera-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .primary-action h3 {
+            font-size: 20px;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .primary-action p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .secondary-action {
+            background: white;
+            border: 1px solid #E5E5E7;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            margin-bottom: 12px;
+        }
+
+        .secondary-action:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-color: #007AFF;
+        }
+
+        .secondary-action .icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .secondary-action .title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .secondary-action .desc {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .recent-foods {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            display: none;
+        }
+
+        .recent-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #333;
+        }
+
+        .food-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #F2F2F7;
+        }
+
+        .food-item:last-child {
+            border-bottom: none;
+        }
+
+        .food-info {
+            flex: 1;
+        }
+
+        .food-name {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .food-time {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .food-calories {
+            font-size: 14px;
+            font-weight: 600;
+            color: #FF9500;
+        }
+
+        .ai-tip-section {
+            background: linear-gradient(135deg, #5856D6 0%, #AF52DE 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+        }
+
+        .ai-tip-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .ai-icon {
+            font-size: 24px;
+            margin-right: 8px;
+        }
+
+        .ai-tip-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .ai-tip-content {
+            background: rgba(255,255,255,0.2);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .bottom-nav {
+            background: white;
+            border-top: 1px solid #E5E5E7;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: background 0.2s ease;
+        }
+
+        .nav-item:hover {
+            background: #F2F2F7;
+        }
+
+        .nav-item.active {
+            background: #E3F2FD;
+        }
+
+        .nav-icon {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+
+        .nav-label {
+            font-size: 10px;
+            color: #666;
+        }
+
+        .nav-item.active .nav-label {
+            color: #007AFF;
+            font-weight: 600;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-text {
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .empty-desc {
+            font-size: 14px;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-content">
+                <img src="ctx-logo.png" alt="LOGO" class="logo">
+                <div class="header-text">
+                    <h1>🍎 每日熱量精算師</h1>
+                    <p>AI驅動的智能營養管理</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="content">
+            <!-- 歡迎卡片 - 引導用戶設定 -->
+            <div class="welcome-card" id="welcomeCard">
+                <div class="welcome-title">🎯 開始您的健康之旅</div>
+        <div class="welcome-desc">
+            為了給您最貼心的營養建議，請先設定您的個人資料，AI將根據國際醫學標準為您推薦每日熱量目標與飲食計劃。
+        </div>
+                <button class="setup-btn" onclick="openProfileSetup()">
+                    📝 設定個人資料
+                </button>
+            </div>
+
+            <!-- 熱量摘要 - 設定後顯示 -->
+            <div class="calorie-summary" id="calorieSummary">
+                <div class="summary-title">📊 今日熱量狀況</div>
+                
+                <div class="target-display">
+                    <div class="target-calories" id="targetCalories">2,505<span class="calorie-unit">卡路里</span></div>
+                    <div class="target-label">AI建議您每日攝取的熱量</div>
+                </div>
+
+                <div class="progress-section">
+                    <div class="progress-title">進度追蹤</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                        <div class="progress-percentage" id="progressPercent">0%</div>
+                    </div>
+                    
+                    <div class="stats">
+                        <div class="stat">
+                            <div class="stat-value" id="consumedCalories">0 <span class="unit">卡</span></div>
+                            <div class="stat-label">已攝取</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value" id="remainingCalories">2,505 <span class="unit">卡</span></div>
+                            <div class="stat-label">剩餘</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value" id="targetCaloriesDisplay">2,505 <span class="unit">卡</span></div>
+                            <div class="stat-label">目標</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="status-message" id="statusMessage">
+                    💡 開始記錄您的第一餐吧！點擊下方拍照識別功能開始追蹤。
+                </div>
+            </div>
+
+            <div class="quick-actions">
+                <h2>📸 記錄食物</h2>
+                
+                <!-- 主要操作：拍照識別 -->
+                <div class="primary-action" onclick="openCamera()">
+                    <span class="camera-icon">📸</span>
+                    <h3>拍照識別食物</h3>
+                    <p>直接拍照，AI自動識別營養成分</p>
+                </div>
+
+                <!-- 次要操作 -->
+                <div class="secondary-action" onclick="quickAddFood()">
+                    <span class="icon">➕</span>
+                    <div class="title">快速添加</div>
+                    <div class="desc">手動記錄食物</div>
+                </div>
+
+                <div class="secondary-action" onclick="openUpload()">
+                    <span class="icon">📷</span>
+                    <div class="title">上傳圖片</div>
+                    <div class="desc">從相簿選擇圖片識別</div>
+                </div>
+            </div>
+
+            <!-- 最近記錄的食物 -->
+            <div class="recent-foods" id="recentFoods">
+                <div class="recent-title">🍽️ 今日餐食</div>
+                <div id="recentFoodsList">
+                    <!-- 動態添加食物項目 -->
+                </div>
+            </div>
+
+            <!-- AI建議 -->
+            <div class="ai-tip-section">
+                <div class="ai-tip-header">
+                    <span class="ai-icon">🤖</span>
+                    <span class="ai-tip-title">AI營養建議</span>
+                </div>
+                <div class="ai-tip-content" id="aiTipContent">
+                    請先設定您的個人資料，AI將為您提供個性化的營養建議和健康指導。
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部導航 -->
+        <div class="bottom-nav">
+            <div class="nav-item active">
+                <span class="nav-icon">🏠</span>
+                <span class="nav-label">首頁</span>
+            </div>
+            <div class="nav-item" onclick="showFoodLog()">
+                <span class="nav-icon">📝</span>
+                <span class="nav-label">記錄</span>
+            </div>
+            <div class="nav-item" onclick="showNutrition()">
+                <span class="nav-icon">📊</span>
+                <span class="nav-label">分析</span>
+            </div>
+            <div class="nav-item" onclick="showProfile()">
+                <span class="nav-icon">👤</span>
+                <span class="nav-label">我的</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 個人資料設定頁面 -->
+    <div id="profileSetupModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; padding: 20px;">
+        <div style="background: white; padding: 30px; border-radius: 16px; width: 100%; max-width: 350px; max-height: 90vh; overflow-y: auto;">
+            <h3 style="margin-bottom: 20px; text-align: center; font-size: 20px;">📝 設定個人資料</h3>
+            <p style="text-align: center; color: #666; margin-bottom: 24px; font-size: 14px;">
+                我們將根據國際醫學標準為您精準計算每日熱量需求
+            </p>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">身高 (cm)</label>
+                <input type="number" id="setupHeight" placeholder="例如：170" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px;">
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">體重 (kg)</label>
+                <input type="number" id="setupWeight" placeholder="例如：65" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px;">
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">年齡</label>
+                <input type="number" id="setupAge" placeholder="例如：28" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px;">
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">性別</label>
+                <select id="setupGender" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px;">
+                    <option value="">請選擇性別</option>
+                    <option value="male">男性</option>
+                    <option value="female">女性</option>
+                </select>
+            </div>
+
+            <div style="margin-bottom: 24px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">活動量</label>
+                <select id="setupActivity" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px;">
+                    <option value="">請選擇活動量</option>
+                    <option value="1.2">久坐不動 (辦公室工作)</option>
+                    <option value="1.375">輕度活動 (每週運動1-3次)</option>
+                    <option value="1.55">中度活動 (每週運動3-5次)</option>
+                    <option value="1.725">高度活動 (每週運動6-7次)</option>
+                    <option value="1.9">極高活動 (體力工作+每日運動)</option>
+                </select>
+            </div>
+            
+            <div style="display: flex; gap: 12px;">
+                <button onclick="closeProfileSetup()" style="flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; background: white; cursor: pointer; font-weight: 600;">取消</button>
+                <button onclick="saveProfileSetup()" style="flex: 1; padding: 12px; border: none; border-radius: 8px; background: #007AFF; color: white; cursor: pointer; font-weight: 600;">完成設定</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 用戶資料
+        let userProfile = {
+            height: null,
+            weight: null,
+            age: null,
+            gender: null,
+            activityLevel: null
+        };
+
+        let dailyCalories = {
+            consumed: 0,
+            target: 0,
+            remaining: 0
+        };
+
+        // 計算每日熱量需求 (Harris-Benedict公式)
+        function calculateDailyCalories(height, weight, age, gender, activityLevel) {
+            let bmr;
+            if (gender === 'male') {
+                bmr = 88.362 + (13.397 * weight) + (4.799 * height) - (5.677 * age);
+            } else {
+                bmr = 447.593 + (9.247 * weight) + (3.098 * height) - (4.330 * age);
+            }
+            
+            const dailyCalories = Math.round(bmr * parseFloat(activityLevel));
+            return dailyCalories;
+        }
+
+        // 檢查是否已設定個人資料
+        function checkProfileSetup() {
+            const savedProfile = localStorage.getItem('userProfile');
+            if (savedProfile) {
+                userProfile = JSON.parse(savedProfile);
+                showCalorieSummary();
+            } else {
+                showWelcomeCard();
+            }
+        }
+
+        // 顯示歡迎卡片
+        function showWelcomeCard() {
+            document.getElementById('welcomeCard').style.display = 'block';
+            document.getElementById('calorieSummary').style.display = 'none';
+            document.getElementById('recentFoods').style.display = 'none';
+        }
+
+        // 顯示熱量摘要
+        function showCalorieSummary() {
+            document.getElementById('welcomeCard').style.display = 'none';
+            document.getElementById('calorieSummary').style.display = 'block';
+            
+            // 計算每日熱量需求
+            dailyCalories.target = calculateDailyCalories(
+                userProfile.height, 
+                userProfile.weight, 
+                userProfile.age, 
+                userProfile.gender,
+                userProfile.activityLevel
+            );
+            dailyCalories.remaining = dailyCalories.target - dailyCalories.consumed;
+            
+            // 更新界面
+            updateCalorieDisplay();
+            updateAITip();
+            
+            // 如果有食物記錄，顯示
+            if (dailyCalories.consumed > 0) {
+                document.getElementById('recentFoods').style.display = 'block';
+            }
+        }
+
+        // 更新熱量顯示
+        function updateCalorieDisplay() {
+            document.getElementById('targetCalories').innerHTML = dailyCalories.target.toLocaleString() + '<span class="calorie-unit">卡路里</span>';
+            document.getElementById('targetCaloriesDisplay').innerHTML = dailyCalories.target.toLocaleString() + ' <span class="unit">卡</span>';
+            document.getElementById('consumedCalories').innerHTML = dailyCalories.consumed.toLocaleString() + ' <span class="unit">卡</span>';
+            document.getElementById('remainingCalories').innerHTML = dailyCalories.remaining.toLocaleString() + ' <span class="unit">卡</span>';
+            
+            // 更新進度條
+            const percentage = Math.round((dailyCalories.consumed / dailyCalories.target) * 100);
+            document.getElementById('progressFill').style.width = Math.min(percentage, 100) + '%';
+            document.getElementById('progressPercent').textContent = percentage + '%';
+            
+            // 更新狀態訊息
+            updateStatusMessage(percentage);
+        }
+
+        // 更新狀態訊息
+        function updateStatusMessage(percentage) {
+            const statusElement = document.getElementById('statusMessage');
+            let message = '';
+            
+            if (percentage === 0) {
+                message = '💡 開始記錄您的第一餐吧！點擊下方拍照識別功能開始追蹤。';
+            } else if (percentage < 30) {
+                message = '🌅 早上好！您今天還沒有開始記錄食物，快來拍照識別您的早餐吧！';
+            } else if (percentage < 60) {
+                message = '🍽️ 很好！您已經記錄了一些食物，繼續保持，記得記錄午餐哦！';
+            } else if (percentage < 80) {
+                message = '👍 進度不錯！您已經完成了大部分目標，晚餐可以選擇輕食。';
+            } else if (percentage < 100) {
+                message = '🎯 快完成了！您已經接近今日目標，可以選擇一些健康的點心。';
+            } else {
+                message = '⚠️ 您已超出今日熱量目標，建議增加運動量或調整明日飲食計劃。';
+            }
+            
+            statusElement.textContent = message;
+        }
+
+        // 更新AI建議
+        function updateAITip() {
+            const percentage = Math.round((dailyCalories.consumed / dailyCalories.target) * 100);
+            let tip = '';
+            
+            if (percentage === 0) {
+                // 根據年齡、性別、身高體重提供個性化建議
+                let personalizedTip = '';
+                const bmi = userProfile.weight / Math.pow(userProfile.height / 100, 2);
+                
+                if (userProfile.age >= 50) {
+                    personalizedTip = `根據您的個人資料（身高${userProfile.height}cm，體重${userProfile.weight}kg，${userProfile.age}歲${userProfile.gender === 'male' ? '男性' : '女性'}），建議多攝取鈣質豐富食物（如牛奶、豆腐）和維生素D，避免高鈉食物。每天適度運動，控制糖分攝取，有助於預防骨質疏鬆。`;
+                } else if (userProfile.age >= 30) {
+                    personalizedTip = `根據您的個人資料（身高${userProfile.height}cm，體重${userProfile.weight}kg，${userProfile.age}歲${userProfile.gender === 'male' ? '男性' : '女性'}），建議增加優質蛋白質（如雞胸肉、魚類）和全穀類攝取，避免加工食品和高糖飲料。注意控制精緻澱粉，多攝取深色蔬菜。`;
+                } else {
+                    personalizedTip = `根據您的個人資料（身高${userProfile.height}cm，體重${userProfile.weight}kg，${userProfile.age}歲${userProfile.gender === 'male' ? '男性' : '女性'}），建議多攝取複合碳水化合物和豐富蛋白質，避免過多油炸食物和含糖飲料。記得多喝水，保持規律作息，有助於身體發育和代謝。`;
+                }
+                
+                tip = personalizedTip;
+            } else if (percentage < 50) {
+                tip = `您目前完成了${percentage}%的熱量攝取。建議增加健康食物的攝取，如全穀類、蛋白質豐富的食物，以達到每日目標。`;
+            } else if (percentage < 80) {
+                tip = `您的熱量攝取進度良好（${percentage}%）。建議晚餐選擇營養均衡的食物，確保達到每日${dailyCalories.target}卡路里的目標。`;
+            } else if (percentage < 100) {
+                tip = `您已接近完成今日目標（${percentage}%）。建議選擇輕食或蔬菜為主，避免過量攝取。`;
+            } else {
+                tip = `您已超出今日熱量目標。建議增加運動量或調整明日飲食計劃，保持健康的生活方式。`;
+            }
+            
+            document.getElementById('aiTipContent').textContent = tip;
+        }
+
+        // 開啟個人資料設定
+        function openProfileSetup() {
+            document.getElementById('profileSetupModal').style.display = 'flex';
+        }
+
+        // 關閉個人資料設定
+        function closeProfileSetup() {
+            document.getElementById('profileSetupModal').style.display = 'none';
+        }
+
+        // 保存個人資料設定
+        function saveProfileSetup() {
+            const height = parseInt(document.getElementById('setupHeight').value);
+            const weight = parseInt(document.getElementById('setupWeight').value);
+            const age = parseInt(document.getElementById('setupAge').value);
+            const gender = document.getElementById('setupGender').value;
+            const activityLevel = document.getElementById('setupActivity').value;
+
+            // 驗證輸入
+            if (!height || !weight || !age || !gender || !activityLevel) {
+                alert('請填寫所有欄位！');
+                return;
+            }
+
+            if (height < 100 || height > 250) {
+                alert('請輸入正確的身高範圍 (100-250cm)！');
+                return;
+            }
+
+            if (weight < 30 || weight > 200) {
+                alert('請輸入正確的體重範圍 (30-200kg)！');
+                return;
+            }
+
+            if (age < 10 || age > 100) {
+                alert('請輸入正確的年齡範圍 (10-100歲)！');
+                return;
+            }
+
+            // 保存資料
+            userProfile = { height, weight, age, gender, activityLevel };
+            localStorage.setItem('userProfile', JSON.stringify(userProfile));
+            
+            // 關閉模態框並顯示摘要
+            closeProfileSetup();
+            showCalorieSummary();
+            
+            alert('✅ 個人資料設定完成！\n\nAI已根據國際醫學標準為您精準計算每日熱量需求。');
+        }
+
+        // 主要功能
+        function openCamera() {
+            if (!userProfile.height) {
+                alert('請先設定您的個人資料！');
+                openProfileSetup();
+                return;
+            }
+            // 拍照模式
+            window.location.href = 'camera.html?mode=camera';
+        }
+
+        function quickAddFood() {
+            if (!userProfile.height) {
+                alert('請先設定您的個人資料！');
+                openProfileSetup();
+                return;
+            }
+            alert('➕ 快速添加食物\n\n您可以：\n• 搜索食物數據庫\n• 手動輸入營養信息\n• 選擇常用食物\n• 設定份量');
+        }
+
+        function openUpload() {
+            if (!userProfile.height) {
+                alert('請先設定您的個人資料！');
+                openProfileSetup();
+                return;
+            }
+            // 上傳模式
+            window.location.href = 'camera.html?mode=upload';
+        }
+
+        function showFoodLog() {
+            alert('📝 食物記錄\n\n查看和管理：\n• 今日所有餐食\n• 營養成分詳情\n• 編輯和刪除記錄\n• 歷史記錄查詢');
+        }
+
+        function showNutrition() {
+            alert('📊 營養分析\n\n詳細分析：\n• 營養成分圖表\n• 與目標對比\n• 趨勢分析\n• 改善建議');
+        }
+
+        function showProfile() {
+            alert('👤 個人檔案\n\n個人設置：\n• 基本信息\n• 健康目標\n• 偏好設置\n• 數據導出');
+        }
+
+        // 模擬添加食物
+        function addFoodToLog(foodName, calories) {
+            dailyCalories.consumed += calories;
+            dailyCalories.remaining = dailyCalories.target - dailyCalories.consumed;
+            
+            // 添加到最近食物列表
+            const foodsList = document.getElementById('recentFoodsList');
+            const newFoodItem = document.createElement('div');
+            newFoodItem.className = 'food-item';
+            newFoodItem.innerHTML = `
+                <div class="food-info">
+                    <div class="food-name">${foodName}</div>
+                    <div class="food-time">剛剛添加</div>
+                </div>
+                <div class="food-calories">${calories} kcal</div>
+            `;
+            foodsList.insertBefore(newFoodItem, foodsList.firstChild);
+            
+            updateCalorieDisplay();
+            updateAITip();
+            
+            // 顯示最近食物區域
+            document.getElementById('recentFoods').style.display = 'block';
+        }
+
+        // 檢查新添加的食物
+        function checkForNewFood() {
+            const newFood = localStorage.getItem('newFood');
+            if (newFood) {
+                const foodData = JSON.parse(newFood);
+                addFoodToLog(foodData.name, foodData.calories);
+                localStorage.removeItem('newFood');
+            }
+        }
+
+        // 頁面載入完成
+        document.addEventListener('DOMContentLoaded', function() {
+            checkProfileSetup();
+            checkForNewFood();
+            
+            console.log('🍎 每日熱量精算師已啟動！');
+            console.log('📊 引導用戶設定個人資料流程已準備就緒');
+            console.log('📸 拍照識別功能已準備就緒');
+        });
+
+        // 從拍照頁面返回時更新數據
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'newFood') {
+                const foodData = JSON.parse(e.newValue);
+                addFoodToLog(foodData.name, foodData.calories);
+            }
+        });
+    </script>
+</body>
+</html>

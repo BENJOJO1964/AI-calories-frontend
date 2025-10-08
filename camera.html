@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>拍照識別食物 - 每日熱量精算師</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            min-height: 100vh;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-shrink: 0;
+        }
+
+        .back-button {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .back-button:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .header-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .header-content h2 {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0;
+            text-align: center;
+        }
+
+        .mode-indicator {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .content {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .camera-container {
+            border: 2px dashed #007AFF;
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            background: #f8f9ff;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .camera-container:hover {
+            border-color: #5856D6;
+            background: #f0f2ff;
+        }
+
+        .camera-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            color: #007AFF;
+        }
+
+        .camera-text {
+            font-size: 16px;
+            font-weight: 600;
+            color: #007AFF;
+            margin-bottom: 8px;
+        }
+
+        .camera-hint {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .tips-section {
+            background: #e8f4ff;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 20px;
+        }
+
+        .tips-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #007AFF;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tips-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .tips-list li {
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .tips-list li::before {
+            content: "•";
+            color: #007AFF;
+            position: absolute;
+            left: 0;
+        }
+
+        .upload-button {
+            background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 16px;
+        }
+
+        .upload-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+        }
+
+        #videoElement {
+            width: 100%;
+            height: 200px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        #captureButton {
+            background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 16px;
+            display: none;
+        }
+
+        #captureButton:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(78, 205, 196, 0.3);
+        }
+
+        #fileInput {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 無LOGO的標題 -->
+        <div class="header">
+            <button class="back-button" onclick="goBack()">← 返回</button>
+            <div class="header-content">
+                <h2 id="pageTitle">📸 拍照識別食物</h2>
+            </div>
+            <div class="mode-indicator" id="modeIndicator">拍照模式</div>
+        </div>
+
+        <div class="content">
+            <div class="section-title">
+                📸 直接拍照識別
+            </div>
+            <p style="color: #666; margin-bottom: 20px;">
+                開啟相機直接拍攝食物，AI將自動識別並分析營養成分
+            </p>
+
+            <!-- 相機容器 -->
+            <div class="camera-container" id="cameraContainer" onclick="startCamera()">
+                <div class="camera-icon">📸</div>
+                <div class="camera-text" id="cameraText">點擊開啟相機</div>
+                <div class="camera-hint" id="cameraHint">支援相機拍照和圖片上傳</div>
+            </div>
+
+            <!-- 視頻元素 -->
+            <video id="videoElement" autoplay muted playsinline></video>
+            
+            <!-- 拍照按鈕 -->
+            <button id="captureButton" onclick="capturePhoto()">📸 拍照</button>
+
+            <!-- 上傳按鈕 -->
+            <button class="upload-button" onclick="uploadImage()">📁 上傳圖片</button>
+            <input type="file" id="fileInput" accept="image/*" onchange="handleFileSelect(event)">
+
+            <!-- 拍照小技巧 -->
+            <div class="tips-section">
+                <div class="tips-title">
+                    💡 拍照小技巧:
+                </div>
+                <ul class="tips-list">
+                    <li>確保食物清晰可見</li>
+                    <li>光線充足，避免陰影</li>
+                    <li>盡量拍攝完整的食物</li>
+                    <li>避免多種食物混合</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let stream = null;
+        let currentMode = 'camera';
+
+        function goBack() {
+            window.history.back();
+        }
+
+        async function startCamera() {
+            try {
+                const constraints = {
+                    video: {
+                        facingMode: 'environment', // 後置攝像頭
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    }
+                };
+
+                stream = await navigator.mediaDevices.getUserMedia(constraints);
+                const videoElement = document.getElementById('videoElement');
+                videoElement.srcObject = stream;
+                videoElement.style.display = 'block';
+                
+                document.getElementById('cameraContainer').style.display = 'none';
+                document.getElementById('captureButton').style.display = 'block';
+                
+                console.log('📸 相機已開啟');
+            } catch (error) {
+                console.error('相機開啟失敗:', error);
+                
+                document.getElementById('cameraText').textContent = '相機開啟失敗';
+                document.getElementById('cameraHint').textContent = '請檢查權限或使用上傳功能';
+                
+                alert('無法開啟相機，可能的原因：\n1. 需要HTTPS協議\n2. 相機權限被拒絕\n3. 瀏覽器不支援\n\n請嘗試上傳圖片功能');
+            }
+        }
+
+        function capturePhoto() {
+            const videoElement = document.getElementById('videoElement');
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            
+            canvas.width = videoElement.videoWidth;
+            canvas.height = videoElement.videoHeight;
+            
+            context.drawImage(videoElement, 0, 0);
+            
+            canvas.toBlob(function(blob) {
+                analyzeImage(blob);
+            }, 'image/jpeg', 0.8);
+            
+            stopCamera();
+        }
+
+        function uploadImage() {
+            document.getElementById('fileInput').click();
+        }
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                analyzeImage(file);
+            }
+        }
+
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            document.getElementById('videoElement').style.display = 'none';
+            document.getElementById('cameraContainer').style.display = 'block';
+            document.getElementById('captureButton').style.display = 'none';
+        }
+
+        function analyzeImage(imageBlob) {
+            console.log('開始分析圖片...');
+            alert('圖片分析功能需要後端API支援');
+            // 這裡可以添加實際的AI分析邏輯
+        }
+
+        // 頁面卸載時停止相機
+        window.addEventListener('beforeunload', stopCamera);
+    </script>
+</body>
+</html>
