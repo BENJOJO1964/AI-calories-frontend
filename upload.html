@@ -228,10 +228,13 @@
 
         .preview-image {
             max-width: 100%;
-            max-height: 200px;
+            max-height: 300px;
+            width: auto;
+            height: auto;
             border-radius: 8px;
-            margin: 16px 0;
+            margin: 16px auto;
             display: none;
+            object-fit: contain; /* 保持圖片比例，不拉伸 */
         }
     </style>
 </head>
