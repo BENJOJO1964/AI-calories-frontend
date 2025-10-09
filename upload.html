@@ -357,7 +357,15 @@
                 }
             } catch (error) {
                 console.error('分析錯誤:', error);
-                alert('分析失敗：' + error.message + '\n\n請檢查網路連接或稍後重試');
+                console.error('錯誤類型:', error.name);
+                console.error('錯誤堆疊:', error.stack);
+                
+                let errorMessage = '分析失敗：' + error.message;
+                if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                    errorMessage += '\n\n可能原因：\n1. 網路連接問題\n2. 後端服務器無法訪問\n3. CORS政策限制\n\n請檢查網路連接或稍後重試';
+                }
+                
+                alert(errorMessage);
                 resetUploadUI();
             }
         }
