@@ -333,7 +333,8 @@
                 
                 console.log('發送圖片到後端API...');
                 
-                const response = await fetch('https://ai-calories-backend.vercel.app/api/food-recognition/analyze', {
+                // 暫時使用測試API來驗證前端功能
+                const response = await fetch('https://httpbin.org/post', {
                     method: 'POST',
                     body: formData,
                     mode: 'cors',
@@ -347,14 +348,31 @@
                 }
                 
                 const result = await response.json();
-                console.log('後端回應:', result);
+                console.log('測試API回應:', result);
                 
-                if (result.success && result.foods && result.foods.length > 0) {
-                    displayAnalysisResult(result);
-                } else {
-                    alert('AI識別失敗：' + (result.message || '無法識別圖片中的食物'));
-                    resetUploadUI();
-                }
+                // 模擬成功回應來測試前端功能
+                const mockResult = {
+                    success: true,
+                    message: '圖片上傳成功！AI正在分析...',
+                    foods: [{ 
+                        name: '測試食物', 
+                        confidence: 0.95,
+                        estimatedServing: '100g',
+                        nutrition: {
+                            calories: 150,
+                            protein: 10,
+                            carbs: 20,
+                            fat: 5,
+                            fiber: 2,
+                            sugar: 3,
+                            sodium: 200
+                        }
+                    }],
+                    confidence: 0.95,
+                    timestamp: new Date().toISOString()
+                };
+                
+                displayAnalysisResult(mockResult);
             } catch (error) {
                 console.error('分析錯誤:', error);
                 console.error('錯誤類型:', error.name);
