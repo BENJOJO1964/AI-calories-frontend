@@ -448,13 +448,44 @@
                 
                 console.log('發送圖片到後端API...', imageBlob.size, 'bytes');
                 console.log('API端點: https://ai-calories-backend.vercel.app/api/food-recognition/analyze');
+                console.log('FormData keys:', Array.from(formData.keys()));
                 
-                const response = await fetch('https://ai-calories-backend.vercel.app/api/food-recognition/analyze', {
-                    method: 'POST',
-                    body: formData,
-                    mode: 'cors',
-                    credentials: 'omit'
-                });
+                // 添加重試機制
+                let response;
+                let lastError;
+                const maxRetries = 3;
+                
+                for (let attempt = 1; attempt <= maxRetries; attempt++) {
+                    try {
+                        console.log(`嘗試第 ${attempt} 次請求...`);
+                        
+                        response = await fetch('https://ai-calories-backend.vercel.app/api/food-recognition/analyze', {
+                            method: 'POST',
+                            body: formData,
+                            mode: 'cors',
+                            credentials: 'omit',
+                            headers: {
+                                'Accept': 'application/json'
+                            }
+                        });
+                        
+                        console.log(`第 ${attempt} 次請求成功，狀態碼:`, response.status);
+                        break;
+                        
+                    } catch (error) {
+                        console.error(`第 ${attempt} 次請求失敗:`, error);
+                        lastError = error;
+                        
+                        if (attempt < maxRetries) {
+                            console.log(`等待 ${attempt * 1000}ms 後重試...`);
+                            await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+                        }
+                    }
+                }
+                
+                if (!response) {
+                    throw lastError || new Error('所有重試都失敗了');
+                }
                 
                 console.log('後端回應狀態:', response.status);
                 
