@@ -922,11 +922,48 @@
                 localStorage.removeItem('newFood');
             }
         }
+        
+        // 檢查所有食物記錄並計算總熱量
+        function loadAllFoodRecords() {
+            const foodLog = JSON.parse(localStorage.getItem('foodLog') || '[]');
+            let totalCalories = 0;
+            
+            foodLog.forEach(food => {
+                totalCalories += food.calories;
+            });
+            
+            if (totalCalories > 0) {
+                dailyCalories.consumed = totalCalories;
+                dailyCalories.remaining = dailyCalories.target - dailyCalories.consumed;
+                updateCalorieDisplay();
+                updateAITip();
+                
+                // 顯示最近食物區域
+                document.getElementById('recentFoods').style.display = 'block';
+                
+                // 更新最近食物列表
+                const foodsList = document.getElementById('recentFoodsList');
+                foodsList.innerHTML = '';
+                foodLog.slice(-5).reverse().forEach(food => {
+                    const foodItem = document.createElement('div');
+                    foodItem.className = 'food-item';
+                    foodItem.innerHTML = `
+                        <div class="food-info">
+                            <div class="food-name">${food.name}</div>
+                            <div class="food-time">${new Date(food.timestamp).toLocaleString()}</div>
+                        </div>
+                        <div class="food-calories">${food.calories} kcal</div>
+                    `;
+                    foodsList.appendChild(foodItem);
+                });
+            }
+        }
 
         // 頁面載入完成
         document.addEventListener('DOMContentLoaded', function() {
             checkProfileSetup();
             checkForNewFood();
+            loadAllFoodRecords(); // 載入所有食物記錄
             
             console.log('🍎 每日熱量精算師已啟動！');
             console.log('📊 引導用戶設定個人資料流程已準備就緒');
