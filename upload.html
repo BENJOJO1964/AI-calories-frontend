@@ -390,32 +390,6 @@
                 let errorMessage = '分析失敗：' + error.message;
                 if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
                     errorMessage += '\n\n可能原因：\n1. 網路連接問題\n2. 後端服務器無法訪問\n3. CORS政策限制\n4. 瀏覽器安全政策\n\n請檢查網路連接或稍後重試';
-                    
-                    // 嘗試提供備用方案
-                    const useBackup = confirm('是否使用備用分析方案？\n\n備用方案將使用本地智能分析，雖然準確度較低但可以立即使用。');
-                    if (useBackup) {
-                        // 使用備用分析方案
-                        const backupResult = {
-                            success: true,
-                            message: '使用備用分析方案',
-                            foods: [{
-                                name: '食物',
-                                confidence: 0.75,
-                                estimatedServing: '100g',
-                                nutrition: {
-                                    calories: 150,
-                                    protein: 5,
-                                    carbs: 25,
-                                    fat: 3,
-                                    fiber: 2,
-                                    sugar: 5,
-                                    sodium: 200
-                                }
-                            }]
-                        };
-                        displayAnalysisResult(backupResult);
-                        return;
-                    }
                 }
                 
                 alert(errorMessage);
