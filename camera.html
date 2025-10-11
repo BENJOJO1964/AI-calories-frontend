@@ -449,34 +449,12 @@
                 console.log('發送圖片到後端API...', imageBlob.size, 'bytes');
                 console.log('API端點: https://ai-calories-backend.vercel.app/api/food-recognition/analyze');
                 
-                // 嘗試多個API端點
-                let response;
-                const apiEndpoints = [
-                    'https://ai-calories-backend.vercel.app/api/food-recognition/analyze',
-                    'https://ai-calories-backend-git-master-benjojo1964.vercel.app/api/food-recognition/analyze'
-                ];
-                
-                let lastError;
-                for (const endpoint of apiEndpoints) {
-                    try {
-                        console.log('嘗試API端點:', endpoint);
-                        response = await fetch(endpoint, {
-                            method: 'POST',
-                            body: formData,
-                            mode: 'cors',
-                            credentials: 'omit'
-                        });
-                        break; // 成功則跳出循環
-                    } catch (error) {
-                        console.error('端點失敗:', endpoint, error);
-                        lastError = error;
-                        continue;
-                    }
-                }
-                
-                if (!response) {
-                    throw lastError || new Error('所有API端點都無法訪問');
-                }
+                const response = await fetch('https://ai-calories-backend.vercel.app/api/food-recognition/analyze', {
+                    method: 'POST',
+                    body: formData,
+                    mode: 'cors',
+                    credentials: 'omit'
+                });
                 
                 console.log('後端回應狀態:', response.status);
                 
