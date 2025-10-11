@@ -567,6 +567,12 @@
                     timestamp: new Date().toISOString(),
                     confidence: food.confidence
                 });
+                
+                // 同時保存到newFood供首頁使用
+                localStorage.setItem('newFood', JSON.stringify({
+                    name: food.name,
+                    calories: food.nutrition.calories
+                }));
             });
             
             localStorage.setItem('foodLog', JSON.stringify(foodLog));
